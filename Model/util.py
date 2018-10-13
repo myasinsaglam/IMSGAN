@@ -1,3 +1,4 @@
+import cv2
 import os
 import imageio
 import numpy as np
@@ -37,7 +38,8 @@ class DataLoader():
         # Get the paths for all the images
         # self.img_paths = []
 
-        self.indexes = np.random.randint(1,self.dataset_size+1)
+        self.indexes = np.arange(1,self.dataset_size+1)
+        np.random.shuffle(self.indexes)
 
         # for filename in os.listdir(self.datapath):
         #     if any(filetype in filename.lower() for filetype in ['jpg', 'png', 'jpeg']):
@@ -74,10 +76,11 @@ class DataLoader():
         # Scale and pre-process images
         imgs_hr, imgs_lr = [], []
         for img_path in img_paths:            
-
+            #print(img_path)
             # Load image
-            img = imageio.imread(img_path).astype(np.float)            
-
+            #img = imageio.imread(img_path).astype(np.float)            
+            img = cv2.imread(img_path)
+            img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
             # If gray-scale, convert to RGB
             if len(img.shape) == 2:
                 img = np.stack((img,)*3, -1)
