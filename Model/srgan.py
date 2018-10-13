@@ -348,7 +348,7 @@ class SRGAN():
 
                 # If test images are supplied, show them to the user
                 # if test_images and epoch % test_frequency == 0:
-            plot_test_images(self, batch_idx,loader, test_images, test_path, epoch)
+            #plot_test_images(self, batch_idx,loader, test_images, test_path, epoch)
 
                 # Check if we should save the network weights
                 # if weight_frequency and epoch % weight_frequency == 0:
