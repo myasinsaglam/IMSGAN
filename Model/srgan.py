@@ -296,7 +296,7 @@ class SRGAN():
             datapath,batch_size,
             self.height_hr, self.width_hr,
             self.height_lr, self.width_lr,
-            self.upscaling_factor
+            self.upscaling_factor,100
         )
 
         total_batch_num = loader.batch_len()
@@ -323,11 +323,11 @@ class SRGAN():
                 # Train discriminator
                 imgs_hr, imgs_lr = loader.load_batch(batch_idx,batch_size)
                 generated_hr = self.generator.predict(imgs_lr)
-                self.discriminator.trainable = True
+                # self.discriminator.trainable = True
                 real_loss = self.discriminator.train_on_batch(imgs_hr, real)
                 fake_loss = self.discriminator.train_on_batch(generated_hr, fake)
                 discriminator_loss = 0.5 * np.add(real_loss, fake_loss)
-                self.discriminator.trainable = False
+                # self.discriminator.trainable = False
 
                 # Train generator
                 imgs_hr, imgs_lr = loader.load_batch(batch_idx,batch_size)
@@ -366,7 +366,7 @@ if __name__ == '__main__':
 
     # Instantiate the SRGAN object
     print(">> Creating the SRGAN network")
-    gan = SRGAN(gen_lr=1e-5)
+    gan = SRGAN(gen_lr=1e-4)
 
     # Load previous imagenet weights
     print(">> Loading old weights")

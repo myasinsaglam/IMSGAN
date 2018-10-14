@@ -4,7 +4,7 @@ import imageio
 import numpy as np
 from scipy.misc import imresize
 import matplotlib.pyplot as plt
-
+import scipy
 
 class DataLoader():
     def __init__(self, datapath, batch_size, height_hr, width_hr, height_lr, width_lr, scale, dataset_size=None):
@@ -78,9 +78,10 @@ class DataLoader():
         for img_path in img_paths:            
             #print(img_path)
             # Load image
-            #img = imageio.imread(img_path).astype(np.float)            
-            img = cv2.imread(img_path)
-            img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+            #img = imageio.imread(img_path).astype(np.float)
+            img = self.imread(img_path)
+            # img = cv2.imread(img_path)
+            # img = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
             # If gray-scale, convert to RGB
             if len(img.shape) == 2:
                 img = np.stack((img,)*3, -1)
@@ -110,6 +111,8 @@ class DataLoader():
         # Return image batch
         return imgs_hr, imgs_lr
 
+    def imread(self, path):
+        return scipy.misc.imread(path, mode='RGB').astype(np.float)
 
 def plot_test_images(model, batch_idx, loader, test_images, test_output, epoch):
     """        

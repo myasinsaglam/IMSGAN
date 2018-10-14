@@ -1,3 +1,4 @@
+import cv2
 import imageio
 import numpy as np
 
@@ -8,11 +9,11 @@ from srgan import SRGAN
 from util import plot_test_images
 
 gan = SRGAN()
-
-gan.load_weights('./data/weights/imagenet_9_generator.h5', './data/weights/imagenet_9_discriminator.h5')
+weight_path = "/Users/Macbook/Desktop/FinalYearProject/1e-4/1e-4_less_img_11_"
+gan.load_weights(weight_path+"generator.h5", weight_path+"discriminator.h5")
 
 # Load image & scale it
-img_hr = imageio.imread("./data/sample.jpg").astype(np.float) / 127.5 - 1
+img_hr = imageio.imread("./data/24.jpg").astype(np.float) / 127.5 - 1
 
 # Create a low-resolution version of it
 lr_shape = (int(img_hr.shape[0]/4), int(img_hr.shape[1]/4))
@@ -21,9 +22,13 @@ img_lr = resize(img_hr, lr_shape, mode='constant')
 # Predict high-resolution version (add batch dimension to image)
 img_sr = gan.generator.predict(np.expand_dims(img_lr, 0))
 
+print("Predicted")
+
 # Remove batch dimension
 img_sr = np.squeeze(img_sr, axis=0)
 
+# plt.imsave("srr.jpg",img_sr)
+# img_sr = cv2.cvtColor(img_sr,cv2.COLOR_RGB2BGR)
 # Images and titles
 images = {
     'Low Resolution': img_lr, 'SRGAN': img_sr, 'Original': img_hr
@@ -35,4 +40,6 @@ for i, (title, img) in enumerate(images.items()):
     axes[i].imshow(0.5 * img + 0.5)
     axes[i].set_title(title)
     axes[i].axis('off')
+
 plt.show()
+# plt.savefig(str(i)+'.jpg')
