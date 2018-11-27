@@ -9,11 +9,11 @@ from srgan import SRGAN
 from util import plot_test_images
 
 gan = SRGAN()
-weight_path = "/Users/Macbook/Desktop/FinalYearProject/1e-4/1e-4_less_img_11_"
+weight_path = "/Users/Macbook/Desktop/model-2_2_46000_"
 gan.load_weights(weight_path+"generator.h5", weight_path+"discriminator.h5")
 
 # Load image & scale it
-img_hr = imageio.imread("./data/24.jpg").astype(np.float) / 127.5 - 1
+img_hr = imageio.imread("/Users/Macbook/Desktop/FinalYearProject/Results/Test_Images/57.jpg").astype(np.float) / 127.5 - 1
 
 # Create a low-resolution version of it
 lr_shape = (int(img_hr.shape[0]/4), int(img_hr.shape[1]/4))
@@ -39,7 +39,7 @@ fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 for i, (title, img) in enumerate(images.items()):
     axes[i].imshow(0.5 * img + 0.5)
     axes[i].set_title(title)
-    axes[i].axis('off')
-
+    axes[i].set_xlabel("XLabel :-)")
+    axes[i].axis('on')
 plt.show()
 # plt.savefig(str(i)+'.jpg')
