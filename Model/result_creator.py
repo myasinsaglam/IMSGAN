@@ -87,7 +87,6 @@ for model_name in model_names:
             print("Predicted for ", "Model-> ", model_name, "Epoch-> ", file_path.split(token)[-1].split("_")[0], " Image-> ", img_path.split(token)[-1])
 
 
-
             img_sr = np.squeeze(img_sr, axis=0)
 
             #img_sr = gaussian(img_sr, sigma=0.9, multichannel=True)
