@@ -24,4 +24,5 @@ for weight_name in weight_names:
             #os.rename(weight_name, weight_name.split("_")[-2] + "_" + weight_name.split("_")[-1])
 
 
+
             os.rename(final_old, final_new2)

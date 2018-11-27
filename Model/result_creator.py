@@ -94,8 +94,6 @@ for model_name in model_names:
 
 
 
-
-
             images = {
                 'Low Resolution': img_lr, 'SRGAN': img_sr, 'Original': img_hr
             }
