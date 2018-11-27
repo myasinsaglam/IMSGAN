@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 from srgan import SRGAN
 from util import plot_test_images
 import os
+from PIL import ImageFilter
+from PIL import Image
+from skimage.filters import gaussian
 
 
 
@@ -26,7 +29,7 @@ model_names = os.listdir(test_weights_path)
 test_images = []
 
 for image in sorted(os.listdir(test_images_path), key=lambda x: int(x.split(".")[0])):
-    if image.endswith(".jpg"): #and image.endswith("112233.jpg"):    -------------------------------> Alınacak imageler
+    if image.endswith(".jpg") and image.endswith("24.jpg"):  #  -------------------------------> Alınacak imageler
         test_images.append(test_images_path+token+image)
 
 # Create SRGAN
@@ -37,6 +40,11 @@ if not os.path.exists(test_results_path):
     os.makedirs(test_results_path)
 
 for model_name in model_names:
+
+    # SADECE BELİRLİ BİR MODEL İÇİN SONUÇ ALMAK GEREKİRSE AÇIK KALSIN, HEPSİ İÇİN SONUÇ İSTENİRSE KAPAT!
+    if model_name != "Model_3":
+        continue
+
     model_path = test_weights_path+token+model_name
 
     # Create model result path if it does not exist
@@ -68,12 +76,25 @@ for model_name in model_names:
             lr_shape = (int(img_hr.shape[0]/4), int(img_hr.shape[1]/4))
             img_lr = resize(img_hr, lr_shape, mode='constant')
 
+
+            img_lr = gaussian(img_lr, sigma=0.6, multichannel=True)
+
+
+
             # returning image from srgan
             img_sr = gan.generator.predict(np.expand_dims(img_lr, 0))
 
             print("Predicted for ", "Model-> ", model_name, "Epoch-> ", file_path.split(token)[-1].split("_")[0], " Image-> ", img_path.split(token)[-1])
 
+
+
             img_sr = np.squeeze(img_sr, axis=0)
+
+            #img_sr = gaussian(img_sr, sigma=0.9, multichannel=True)
+
+
+
+
 
             images = {
                 'Low Resolution': img_lr, 'SRGAN': img_sr, 'Original': img_hr
@@ -95,12 +116,25 @@ for model_name in model_names:
 
 
 
-
-
             #plt.savefig(save_path+token+model_name+"_epoch_"+file_path.split(token)[-1].split("_")[0]+"_img_"+img_path.split(token)[-1])
-            plt.savefig(image_result_path + token + "epoch_" + file_path.split(token)[-1].split("_")[0])
+            plt.savefig(image_result_path + token + "epoch_" + file_path.split(token)[-1].split("_")[0]) # +"-BLUR")
             plt.close()
 
+            # save created sr image
+
+
+
+            img_sr = (img_sr+1)*127.5
+            img_sr = img_sr.astype(np.uint8)
+            img_sr = cv2.cvtColor(img_sr, cv2.COLOR_RGB2BGR)
+            cv2.imwrite(image_result_path + token + "epoch_" + file_path.split(token)[-1].split("_")[0] + "_SR.jpg", img_sr)
+
+            """
+            img_hr = (img_hr+1)*127.5
+            img_hr = img_hr.astype(np.uint8)
+            img_hr = cv2.cvtColor(img_hr, cv2.COLOR_RGB2BGR)
+            cv2.imwrite(image_result_path + token + "epoch_" + file_path.split(token)[-1].split("_")[0] + "_HR.jpg", img_hr)
+            """
 
 
 
