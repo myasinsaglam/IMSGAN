@@ -8,21 +8,22 @@ from keras.applications.imagenet_utils import preprocess_input
 from keras.preprocessing import image
 import matplotlib.pyplot as plt
 from keras.models import model_from_json
+from skimage.measure import compare_ssim as structural_similarity
+import cv2
+import math
 import os
 import pickle
 import matplotlib.pyplot as plt
+from collections import defaultdict
+from glob import glob
+
 import scipy.misc
 
-# CONSTANTS OF MATCHING ALGORITHM.
-hr_shape = 256
-lr_shape = 64
-k_value = 3
-epsilon = 0.35 # A threshold value for verification that used with cosine similarity measure.
-dir_feature_database = '/Users/Macbook/Desktop/FinalYearProject/IMSGAN/Model/database/data.p'
+
 # VGG Face Network Definition
 def vgg_face(weights_path):
     model = Sequential()
-    model.add(ZeroPadding2D((1, 1), input_shape=(hr_shape, hr_shape, 3)))
+    model.add(ZeroPadding2D((1, 1), input_shape=(256, 256, 3)))
     model.add(Convolution2D(64, (3, 3), activation='relu'))
     model.add(ZeroPadding2D((1, 1)))
     model.add(Convolution2D(64, (3, 3), activation='relu'))
@@ -69,6 +70,22 @@ def vgg_face(weights_path):
     # model.summary()
     return model
 
+model = vgg_face('/Users/Macbook/Desktop/FinalYearProject/IMSGAN/vgg_face_weights.h5')
+# model.summary()
+
+vgg_face_descriptor = Model(inputs=model.layers[0].input, outputs=model.layers[-2].output)
+
+
+
+# for filename in glob.iglob(result_img_path + '*/*.jpg', recursive=True):
+#      print(filename)
+# result_filenames = [item for item in result_filenames if item.endswith(".jpg")]
+
+# print(result_filenames)
+
+# dictionary_models = {"1":"Vgg19","2":"Vgg-Face"}
+
+
 # A function that make images ready for input by converting np array
 def preprocess_image(image_path):
     img = load_img(image_path, target_size=(hr_shape, hr_shape))
@@ -112,7 +129,7 @@ def load_database(pkl_database_dir):
     return database
 
 # A function that returns the most similar image filenames of given image file.
-def matcher(feature_database,test_img_filename):
+def matcher(feature_database, test_img_filename):
     print("Test image : ",test_img_filename.split('/')[-1])
     scores = {}
     euclideans = {}
@@ -154,28 +171,128 @@ def plotter( euclidean_scores, cosine_scores, k_value, test_img_dir):
         axes[i].axis('on')
     plt.show()
 
+def psnr_measure(img1, img2):
+    mse = np.mean((img1 - img2) ** 2)
+    if mse == 0:
+        return 100
+    PIXEL_MAX = 255.0
+    return 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
+
+def calculate_psnr(original_filename, test_filename):
+    original_img = cv2.imread(original_filename)
+    test_img = cv2.imread(test_filename)
+    result = psnr_measure(original_img, test_img)
+    # print(result)
+    return result
+
+def calculate_ssim(original_filename,test_filename,multichannel=True):
+    original_img = cv2.imread(original_filename)
+    test_img = cv2.imread(test_filename)
+    result = structural_similarity(original_img, test_img, multichannel=multichannel)
+    # print(result)
+    return result
+
+
+# CONSTANTS OF MATCHING ALGORITHM.
+hr_shape = 256
+lr_shape = 64
+k_value = 3
+epsilon = 0.35 # A threshold value for verification that used with cosine similarity measure.
+dir_feature_database = '/Users/Macbook/Desktop/FinalYearProject/IMSGAN/Model/database/data.p'
+sepsign = "/"
+# RESULT IMAGES PATH FOR PSNR AND SSIM CALCULATION
+result_img_path = "/Users/Macbook/Desktop/FinalYearProject/Final_Results/Test_Results"
+# scandir_iterator = os.scandir(result_img_path)
+# result_filenames = [item.path for item in scandir_iterator]
+# result_filenames =glob.iglob(result_img_path+"*",recursive=True))]
+
+# dir_list = next(os.walk(result_img_path))[1]
+
+# print(dir_list)
+
+result_dictionary = {}
+
+model_names = ["model_bicubic", "model_0", "model_2", "model_3", "model_6", "model_7"]
+image_names = []
+
+print(os.listdir(result_img_path))
+for filename in os.listdir(result_img_path):
+    print(filename)
+    filename = result_img_path + sepsign + filename
+    if os.path.isdir(filename):
+        print(filename)
+        img_name = filename.split(sepsign)[-1]
+        image_names.append(img_name)
+        original_path = filename+sepsign+"model_original.jpg"
+        model_image_paths = []
+        psnr = []
+        ssim = []
+        for item in model_names:
+            dst =filename+sepsign+item+".jpg"
+            print(dst)
+            model_image_paths.append(dst)
+            ssim.append(calculate_ssim(original_path,dst))
+            psnr.append(calculate_psnr(original_path,dst))
+        imname = str(img_name)
+        result_dictionary[imname] = {}
+        result_dictionary[imname]['psnr'] = psnr
+        result_dictionary[imname]['ssim'] = ssim
+        result_dictionary[imname]['model_images'] = model_image_paths
+        print(result_dictionary[imname])
 
 
 
-database_path= "/Users/Macbook/Desktop/FinalYearProject/Results/Test_Images"
-
-model = vgg_face('/Users/Macbook/Desktop/FinalYearProject/IMSGAN/vgg_face_weights.h5')
-# model.summary()
-
-vgg_face_descriptor = Model(inputs=model.layers[0].input, outputs=model.layers[-2].output)
-
-feature_database = load_database(dir_feature_database)
-# create_database_features(database_dir=database_path)
 
 
-test_path = "/Users/Macbook/Desktop/FinalYearProject/Results/Test_Images/"
-test2_path = "/Users/Macbook/Desktop/FinalYearProject/Results/test/"
-test2_filenames = [item for item in sorted(os.listdir(test2_path)) if item.endswith(".jpg")]
-print(test2_filenames)
-img_1 = "29.jpg"
-img_2 = "24.jpg"
 
-# scipy.misc.imsave('outfile.jpg', image_array)
-for fname in test2_filenames:
-    cosine_scores,euclidean_scores = matcher(feature_database,test2_path+fname)
-    plotter(euclidean_scores,cosine_scores,k_value,test2_path+fname)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#
+# database_path= "/Users/Macbook/Desktop/FinalYearProject/Results/Test_Images"
+# model = vgg_face('/Users/Macbook/Desktop/FinalYearProject/IMSGAN/vgg_face_weights.h5')
+# # model.summary()
+#
+# vgg_face_descriptor = Model(inputs=model.layers[0].input, outputs=model.layers[-2].output)
+#
+# feature_database = load_database(dir_feature_database)
+# # create_database_features(database_dir=database_path)
+#
+#
+# test_path = "/Users/Macbook/Desktop/FinalYearProject/Results/database/"
+# test2_path = "/Users/Macbook/Desktop/FinalYearProject/Results/test/"
+# test2_filenames = [item for item in sorted(os.listdir(test2_path)) if item.endswith(".jpg")]
+# print(test2_filenames)
+# img_1 = "29.jpg"
+# img_2 = "24.jpg"
+#
+#
+# # print(calculate_ssim(test_path+img_1,test_path+img_2))
+#
+# # scipy.misc.imsave('outfile.jpg', image_array)
+# for fname in test2_filenames:
+#     cosine_scores,euclidean_scores = matcher(feature_database,test2_path+fname)
+#     plotter(euclidean_scores,cosine_scores,k_value,test2_path+fname)
